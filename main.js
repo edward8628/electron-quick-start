@@ -1,20 +1,23 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const {ipcMain, app, BrowserWindow, Menu, Tray} = require('electron')
+const path = require('path')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+let mainWindow = null;
+let appIcon = null;
 
-function createWindow () {
+function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     backgroundColor: 'lightgray',
-    title: 'Demoji',
+    title: 'Demo',
     width: 800,
     height: 600,
     webPreferences: {
       nodeIntegration: true
-    }
+    },
+    icon: path.join(__dirname, 'src/assets/png/64x64.png')
   })
 
   // and load the index.html of the app.
@@ -32,10 +35,28 @@ function createWindow () {
   })
 }
 
+function createTray() {
+  const iconPath = path.join(__dirname, 'src/assets/iconTemplate.png')
+  appIcon = new Tray(iconPath)
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open',
+      click: () => {
+        if (!mainWindow) createWindow()
+      }
+    }
+  ])
+
+  appIcon.setToolTip('Electron Demo in the tray.')
+  appIcon.setContextMenu(contextMenu)
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow)
+app.on('ready', () => {
+  createTray()
+})
 
 // Quit when all windows are closed.
 app.on('window-all-closed', function () {
@@ -48,6 +69,7 @@ app.on('activate', function () {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) createWindow()
+  if (appIcon === null) createTray()
 })
 
 // In this file you can include the rest of your app's specific main process
